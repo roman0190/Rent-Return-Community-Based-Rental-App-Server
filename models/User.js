@@ -79,6 +79,10 @@ const userSchema = new mongoose.Schema(
       type: Boolean,
       default: false,
     },
+    isEmailVerified: {
+      type: Boolean,
+      default: false,
+    },
     otp: { type: String, default: "" },
     otpExpiration: { type: Date, default: null }, // OTP expiration time
     resetToken: {
@@ -90,6 +94,9 @@ const userSchema = new mongoose.Schema(
     timestamps: true,
   }
 );
+
+// Create index for location-based queries
+userSchema.index({ location: "2dsphere" });
 
 const User = mongoose.model("User", userSchema);
 export default User;

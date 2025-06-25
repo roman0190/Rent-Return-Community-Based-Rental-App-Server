@@ -1,15 +1,16 @@
 import dotenv from "dotenv";
+dotenv.config();
 import express from "express";
 import connectDB from "./config/db.js";
 import authRoutes from "./routes/authRoutes.js";
-dotenv.config();
+import userRoutes from "./routes/userRoutes.js";
 
 connectDB();
 const app = express();
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use("/api/auth", authRoutes);
-
+app.use("/api/users",userRoutes)
 app.listen(3000, () => {
   console.log("Server is running on http://localhost:3000");
 });

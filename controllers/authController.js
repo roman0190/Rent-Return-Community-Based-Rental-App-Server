@@ -2,6 +2,7 @@ import User from "../models/User.js";
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 import crypto from "crypto";
+import { sendVerificationEmail } from "../utils/mailer.js";
 export const login = async (req, res) => {
   try {
     const { email, password } = req.body;
@@ -24,6 +25,13 @@ export const login = async (req, res) => {
         message: "Invalid email or password",
       });
     }
+    if (!user.isEmailVerified) {
+      return res.status(401).json({
+        success: false,
+        message:
+          "Email not verified. Please verify your email before logging in.",
+      });
+    }
     // Check password
     const isMatch = await bcrypt.compare(password, user.password);
     if (!isMatch) {
@@ -34,7 +42,12 @@ export const login = async (req, res) => {
     }
     // Create JWT token
     const token = jwt.sign(
-      { id: user._id, name: user.name, email: user.email },
+      {
+        id: user._id,
+        name: user.name,
+        email: user.email,
+        isAdmin: user.isAdmin,
+      },
       process.env.JWT_SECRET,
       { expiresIn: "30d" }
     );
@@ -74,6 +87,10 @@ export const register = async (req, res) => {
       });
     }
 
+    // // Generate OTP for verification
+    // const otp = Math.floor(100000 + Math.random() * 900000).toString();
+    // const otpExpiration = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes
+
     // Hash password
     const hashedPassword = await bcrypt.hash(password, 10);
     // Create new user
@@ -83,7 +100,6 @@ export const register = async (req, res) => {
       password: hashedPassword,
       phone,
     });
-
     // Create JWT token
     const token = jwt.sign(
       { id: newUser._id, name: newUser.name, email: newUser.email },
@@ -128,6 +144,9 @@ export const sendOtp = async (req, res) => {
         message: "User not found with this email",
       });
     }
+    // Send verification email (optional)
+    const name = user.name || "User"; // Fallback to "User" if name is not set
+    await sendVerificationEmail(email, name, otp);
     // Update user with OTP and expiration time
     res.status(200).json({
       success: true,
@@ -170,7 +189,7 @@ export const verifyOtp = async (req, res) => {
         message: "Invalid or expired OTP",
       });
     }
-    // Create JWT token
+
     // 1. Create random token
     const token = crypto.randomBytes(32).toString("hex");
 
@@ -179,13 +198,14 @@ export const verifyOtp = async (req, res) => {
     // Clear OTP and expiration time
     user.otp = "";
     user.otpExpiration = null;
+    user.isEmailVerified = true; // Mark email as verified
     user.resetToken = resetToken;
     await user.save();
 
     res.status(200).json({
       success: true,
       message: "OTP verified successfully",
-      token,
+      resetToken,
     });
   } catch (error) {
     console.error("OTP verification error:", error);
