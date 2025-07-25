@@ -1,4 +1,5 @@
 import {
+  deleteUser,
   getAllUsers,
   getUserById,
   updateUser,
@@ -6,12 +7,12 @@ import {
 import express from "express";
 import { protect, admin } from "../middleware/authMiddleware.js";
 const router = express.Router();
+router.get("/get-user/:id", getUserById);
 router.use(protect);
-router.get("/:id", getUserById);
-router.put("/:id", updateUser);
+router.put("/update-user/:id", updateUser);
 router.use(admin);
 router.get("/", getAllUsers);
-// router.delete("/:id", deleteUser);
+router.delete("/delete-user/:id", deleteUser);
 //not implemented yet
 // router.post("/", createUser);
 

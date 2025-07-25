@@ -9,7 +9,6 @@ export const sendVerificationEmail = async (email, name, otp) => {
     },
   });
 
-
   try {
     const mailOptions = {
       from: `"Rent & Return" <${process.env.EMAIL_USER}>`,

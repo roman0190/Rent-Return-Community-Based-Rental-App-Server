@@ -69,6 +69,12 @@ const itemSchema = new mongoose.Schema(
   }
 );
 
+
+// Add index for better location queries
+itemSchema.index({ location: "2dsphere" });
+
+// Add index for better search performance  
+itemSchema.index({ title: "text", description: "text" });
 const Item = mongoose.model("Item", itemSchema);
 
 export default Item;

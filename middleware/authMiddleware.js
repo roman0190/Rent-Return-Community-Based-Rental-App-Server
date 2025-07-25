@@ -1,5 +1,5 @@
+import User from "../models/User.js";
 import jwt from "jsonwebtoken";
-
 export function protect(req, res, next) {
   try {
     let token;
@@ -9,11 +9,12 @@ export function protect(req, res, next) {
     ) {
       token = req.headers.authorization.split(" ")[1];
       const decoded = jwt.verify(token, process.env.JWT_SECRET);
+
       req.user = {
         id: decoded.id,
         name: decoded.name,
         email: decoded.email,
-        isAdmin: decoded.isAdmin,
+        // isAdmin: decoded.isAdmin,
       };
       next();
     } else {
@@ -47,8 +48,10 @@ export function protect(req, res, next) {
 }
 
 // Admin middleware - requires isAdmin field in token payload
-export function admin(req, res, next) {
-  if (req.user && req.user.isAdmin) {
+export async function admin(req, res, next) {
+  const userId = req.user.id;
+  const user = await User.findById(userId);
+  if ((req.user && req.user.isAdmin) || (user && user.isAdmin)) {
     next();
   } else {
     return res.status(403).json({
